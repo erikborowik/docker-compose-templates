@@ -1,0 +1,29 @@
+#https://imasters.com.br/banco-de-dados/mysql-adminer-docker-compose-montando-rapidamente-um-ambiente-para-uso
+#
+
+version: '3.9'
+
+services:
+  mysqlsrv:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: "root"
+      MYSQL_DATABASE: "testedb"
+    ports:
+      - "3306:3306"
+    volumes:
+            #- /home/renatogroffe/Desenvolvimento/Docker/Volumes/MySql:/var/lib/mysql
+      - /home/erik/development/devops/docker-mysql/Volumes/MySql:/var/lib/mysql
+    networks:
+      - mysql-compose-network
+
+  adminer:
+    image: adminer
+    ports:
+      - 5555:8080
+    networks:
+      - mysql-compose-network
+
+networks: 
+  mysql-compose-network:
+    driver: bridge
