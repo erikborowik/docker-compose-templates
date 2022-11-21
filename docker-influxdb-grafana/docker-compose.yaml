@@ -1,0 +1,44 @@
+version: '3.9'
+services:
+  influxdb:
+    image: influxdb:1.7.11
+    restart: always
+    ports:
+      - 8086:8086
+    volumes:
+      - influxdb_data:/var/lib/influxdb
+    networks:
+      - influx   
+  chronograf:
+    image: chronograf:latest
+    restart: always
+    ports:
+      - 8888:8888
+    depends_on:
+      - influxdb
+    volumes:
+      - chronograf_data:/var/lib/chronograf
+    networks:
+      - influx            
+  grafana:
+    image: grafana/grafana
+    restart: always
+    ports:
+      - 3000:3000
+    environment:
+      - "GF_SECURITY_ADMIN_USER=teste"
+      - "GF_SECURITY_ADMIN_PASSWORD=teste"      
+    networks:
+      - influx
+    links:
+      - influxdb
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - influxdb
+networks:
+  influx:
+volumes:
+    influxdb_data:
+    chronograf_data:
+    grafana_data:  
