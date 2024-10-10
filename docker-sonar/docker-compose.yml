@@ -1,3 +1,4 @@
+# SONAR USER: ADMIN // PASSWD: bitnami
 services:
   postgresql:
     image: docker.io/bitnami/postgresql:16
