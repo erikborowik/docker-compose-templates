@@ -13,4 +13,6 @@ services:
       - "5672:5672"
       - "25676:25676"
     volumes:
-      - ./data/:/var/lib/rabbitmq/
+      - rabbitmq_data:/var/lib/rabbitmq
+volumes:
+  rabbitmq_data:
