@@ -9,6 +9,11 @@ services:
       - "zookeeper_data:/bitnami"
     environment:
       - ALLOW_ANONYMOUS_LOGIN=yes
+    healthcheck:
+      test: ["CMD", "zkServer.sh", "status"]
+      interval: 5s
+      timeout: 5s
+      retries: 15      
 
   kafka:
     image: "docker.io/bitnami/kafka:3.6.2-debian-12-r0"
@@ -24,8 +29,12 @@ services:
       - KAFKA_CFG_LISTENERS=CLIENT://:9092,EXTERNAL://:9093
       - KAFKA_CFG_ADVERTISED_LISTENERS=CLIENT://kafka:9092,EXTERNAL://localhost:9093
       - KAFKA_INTER_BROKER_LISTENER_NAME=CLIENT
+    # depends_on:
+    #   - zookeeper
+    restart: on-failure
     depends_on:
-      - zookeeper
+      zookeeper:
+        condition: service_healthy    
 
   kafdrop:
     image: obsidiandynamics/kafdrop:3.30.0
