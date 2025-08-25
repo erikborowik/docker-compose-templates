@@ -1,0 +1,51 @@
+services:
+  postgres:
+    image: postgres:15
+    restart: always
+    container_name: postgres
+    environment:
+      POSTGRES_DB: mydb
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  mongodb:
+    image: mongo:6
+    restart: always
+    container_name: mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodata:/data/db
+
+  # rabbitmq:
+  #   image: rabbitmq:4-management
+  #   container_name: rabbitmq
+  #   ports:
+  #     - "5672:5672"    # Porta para aplicações
+  #     - "15672:15672"  # Porta da UI de administração
+  #   environment:
+  #     RABBITMQ_DEFAULT_USER: admin
+  #     RABBITMQ_DEFAULT_PASS: admin
+
+  jaeger:
+    image: jaegertracing/jaeger:2.1.0
+    container_name: jaeger
+    ports:
+      - "5778:5778"
+      - "16686:16686" # UI web
+      - "4317:4317"
+      - "4318:4318"
+      - "14268:14268"
+      - "14250:14250"
+      - "9411:9411"
+
+volumes:
+  pgdata:
+  mongodata:
