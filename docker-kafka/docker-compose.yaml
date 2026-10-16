@@ -1,62 +1,57 @@
-﻿version: "3.3"
-
-services:
-  zookeeper:
-    image: "docker.io/bitnami/zookeeper:3.9.3-debian-12-r15"
-    ports:
-      - "2181:2181"
-    volumes:
-      - "zookeeper_data:/bitnami"
-    environment:
-      - ALLOW_ANONYMOUS_LOGIN=yes
-    healthcheck:
-      test: ["CMD", "zkServer.sh", "status"]
-      interval: 5s
-      timeout: 5s
-      retries: 15      
-
+﻿services:
   kafka:
-    image: "docker.io/bitnami/kafka:3.6.2-debian-12-r0"
+    image: "docker.io/apache/kafka:3.9.1"
     ports:
       - "9092:9092"
       - "9093:9093"
     volumes:
-      - "kafka_data:/bitnami"
+      - "kafka_kraft_data:/var/lib/kafka/data"
     environment:
-      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
-      - ALLOW_PLAINTEXT_LISTENER=yes
-      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CLIENT:PLAINTEXT,EXTERNAL:PLAINTEXT
-      - KAFKA_CFG_LISTENERS=CLIENT://:9092,EXTERNAL://:9093
-      - KAFKA_CFG_ADVERTISED_LISTENERS=CLIENT://kafka:9092,EXTERNAL://localhost:9093
+      # KRaft single-node (broker + controller), sem Zookeeper
+      - KAFKA_NODE_ID=1
+      - KAFKA_PROCESS_ROLES=broker,controller
+      - CLUSTER_ID=MkU3OEVBNTcwNTJENDM2Qk
+      - KAFKA_CONTROLLER_QUORUM_VOTERS=1@kafka:9094
+      - KAFKA_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=CLIENT:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      - KAFKA_LISTENERS=CLIENT://:9092,EXTERNAL://:9093,CONTROLLER://:9094
+      - KAFKA_ADVERTISED_LISTENERS=CLIENT://kafka:9092,EXTERNAL://localhost:9093
       - KAFKA_INTER_BROKER_LISTENER_NAME=CLIENT
-    # depends_on:
-    #   - zookeeper
-    restart: on-failure
-    depends_on:
-      zookeeper:
-        condition: service_healthy    
+      - KAFKA_LOG_DIRS=/var/lib/kafka/data
+      # Single broker: replication factor 1 para tópicos internos
+      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+      - KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1
+      - KAFKA_TRANSACTION_STATE_LOG_MIN_ISR=1
+      - KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS=0
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 > /dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 15
+      start_period: 15s
+    restart: "no"
 
   kafdrop:
-    image: obsidiandynamics/kafdrop:3.30.0
+    image: obsidiandynamics/kafdrop:4.3.0
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
     ports:
       - 19000:9000
     environment:
       KAFKA_BROKERCONNECT: kafka:9092
 
   redpanda-console:
-    image: docker.redpanda.com/redpandadata/console:latest
+    image: docker.redpanda.com/redpandadata/console:v3.12.0
     ports:
       - 18080:8080
     environment:
       - KAFKA_BROKERS=kafka:9092
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
 
 
 volumes:
-  zookeeper_data:
-    driver: local
-  kafka_data:
+  kafka_kraft_data:
     driver: local
